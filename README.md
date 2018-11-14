@@ -32,6 +32,14 @@ Licenses must be purchased from Next Design Solutions directly or through an aut
 
 * Coming soon
 
+## Permissions
+
+NextJTAG needs access to the FTDI chip on the FPGA over USB in order to work, which requires special permissions.  There are two options on Linux systems:
+1. Run as root user (not ideal, but convenient)
+2. Install udev rules to allow non-root users access to read and write to USB FTDI devices (best practice)
+
+To do option 2, simply copy the `.rules` files from the release (located in `<release>/lib/udev/rules.d`) into the `/etc/udev/rules.d` directory on your system.  However, the rule will only apply to new USB connections.  If you already have a FPGA connected over USB, you can manually trigger the rule by running `udevadm trigger --action=add` as root.
+
 ## Examples
 
 Query Device DNAs from all attached devices (no license required):
