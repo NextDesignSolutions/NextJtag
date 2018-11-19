@@ -30,7 +30,7 @@ Licenses must be purchased from Next Design Solutions directly or through an aut
 
 ### Purchasing options
 
-* Coming soon
+* [fpga.guide](https://shop.fpga.guide/collections/all/products/nextjtag-license)
 
 ## Permissions
 
