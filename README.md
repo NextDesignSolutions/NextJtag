@@ -6,6 +6,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 
 * Querying Device DNAs of attached FGPAs
 * Loading bitstreams in parallel (not persistent across power cycling)
+* Clearing the currently loaded bitstream
 * Reading the min, max, and current temperature
 * Reading/writing SYSMON registers
 
