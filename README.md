@@ -37,7 +37,7 @@ Licenses must be purchased from Next Design Solutions directly or through an aut
 ### Purchasing options
 
 * [fpga.guide](https://shop.fpga.guide/collections/all/products/nextjtag-license) (Paypal, Credit Card, or various crypto currencies)
-* Contact `turekaj#2845` on discord (etherium only)
+* Contact `turekaj#2845` on discord (Ethereum only)
 
 ## Permissions (Linux only)
 
