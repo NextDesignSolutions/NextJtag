@@ -8,8 +8,9 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 * Loading bitstreams in parallel (not persistent across power cycling)
 * Clearing the currently loaded bitstream
 * Reloading the bitstream from flash
-* Reading the min, max, and current temperature
+* Reading the min, max, and current temperature and voltage
 * Reading/writing SYSMON registers
+* Changing voltage controller settings (BCU1525 only, requires v2.0+)
 
 ## Supported Xilinx FPGAs
 
@@ -49,15 +50,28 @@ To do option 2, simply copy the `.rules` files from the release (located in `<re
 
 ## Driver Install (Windows only)
 
-NextJTAG requires an open source driver, instead of the proprietary FTDI driver that Vivado and some miners use.  In order to use NextJTAG, windows needs to forced to use the open source driver on the FTDI JTAG interface (Interface 0) of the FPGA cards.
+NextJTAG supports two drivers: a proprietary FTDI driver from the manufacturer and an open source driver.  Only one driver needs to be used.
 
-1. (optional) Install the [proprietary driver](http://www.ftdichip.com/Drivers/CDM/CDM21228_Setup.zip). This will create a clean slate, and will use the proprietary driver as default the for all interfaces for the FTDI chip.  If you are already using Vivado, this is probably not necessary
+### Proprietary FTDI driver (default for Windows)
+
+Most other tools and miners, including Vivado, use this driver, so using this with NextJTAG ensures maximum interoperability.  If the driver isn't already installed, it can be found [here](https://www.ftdichip.com/Drivers/D2XX.htm) (there is a Windows installer if you search for "setup executable" on that page).
+
+Once the driver is installed, you should be able to run NextJTAG without any arguments, and see a list of your FPGAs.
+
+### Open Source FTDI driver (advanced users only)
+
+The open source driver is around for legacy reasons, and not recommended for most users.  The open source driver will need to be configured for the FTDI interfaces that NextJTAG uses (Interface 0 for JTAG, Interface 2 for BMC control).
+
+1. (optional) Installed the Install the [proprietary driver](#proprietary-ftdi-driver-default-for-windows).  This will create a clean slate, and will use the proprietary driver as default the for all interfaces for the FTDI chip.  If you are already using Vivado, this is probably not necessary
 2. Download the [zadig](https://zadig.akeo.ie/) tool and run it as administrator.  This is a convenient tool to for installing drivers compatible with `libusb`
 3. In Zadig, select `Options > Show all devices`, and then use the dropdown to select Interface 0 for one of your FPGA cards.  On the line below the dropdown, select `libusbK` and then hit the `Replace Driver` button.  Repeat for Interface 0 for all of your FPGA cards.  Do not replace the driver for the other interfaces, since some miners require the proprietary driver for those to work.
+4. (optional) If you require BMC control on the BCU1525, repeat step 3 for Interface 2 for all FPGA cards.  This may prevent USB based miners from working, so you might need to switch it back after the BMC is configured.
 
 ![alt text](zadig.png "Example to replace driver for VCU1525")
 
-The changes made by Zadig will be persistent, even after reboots.  To remove the open source driver, just install the proprietary drive again from step 1.  **You will need to do this in order to use Vivado again after running these steps**
+The changes made by Zadig will be persistent, even after reboots.  To remove the open source driver, just install the proprietary driver again from step 1.  **You will need to do this in order to use Vivado again after running these steps**
+
+In order to tell NextJTAG to use the open source driver, the `--prefer_libftdi` must be passed on the commad line.
 
 ## Examples
 
@@ -88,11 +102,19 @@ $ nextjtag -a -m -b vcu1525_keccak_21_600.bit
 [2018-11-11 21:39:22] Device 3: Programming bitstream: SUCCESS
 ```
 
+Set voltage for device 0 (BCU1525 only, requires v2.0+):
+```
+$ nextjtag -d0 --set_voltage=0.72
+Using license file: /home/mbrase/nextjtag_license.txt
+[2019-01-30 02:10:15] Device 0: Changing voltage: STARTING...
+[2019-01-30 02:10:23] Device 0: Changing voltage: SUCCESS
+```
+
 ## Troubleshooting
 
 How to fix some common problems.
 
-#### No devices avaiable
+#### No devices avaiable or missing devices
 
 ```
 $ nextjtag
@@ -100,7 +122,9 @@ List of available devices:
   (No devices found)
 ```
 
-Check that your FPGAs are plugged in.  On Linux, you can do `lsusb` and search for FT4232H or "Future Technology Devices International" (FTDI).  On Windows, check device manager, and make sure you have gone through the [driver install](#driver-install-windows-only)
+Check that your FPGAs are plugged in.  On Linux, you can do `lsusb` and search for FT4232H or "Future Technology Devices International" (FTDI).  On Windows, check device manager, and make sure you have gone through the [driver install](#driver-install-windows-only).
+
+If it was previously working on Windows, but devices are not showing up now, then sometimes the FTDI driver gets stuck and prevents NextJTAG from opening deivces.  You can try running NextJTAG with the experimental `--force_ftd2xx_reload` option to attempt to get it unstuck.  If that doesn't work, you can try unplugging and plugging the device back in, or rebooting.
 
 #### Unable to open device (no device name)
 
