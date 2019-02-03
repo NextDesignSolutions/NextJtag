@@ -15,6 +15,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 ## Supported Xilinx FPGAs
 
 * XCVU9P (VCU1525, BCU1525, or BTU9P)
+* XCVU13P (CVP13) - in BETA, requires v2.0.1+
 * (More coming soon!)
 
 ## Supported Platforms
