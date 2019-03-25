@@ -10,8 +10,8 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 * Reloading the bitstream from flash
 * Reading the min, max, and current temperature and voltage
 * Reading/writing XADC/SYSMON registers
-* Changing voltage controller settings (BCU1525 only, see (limitations)[#limitations])
-* Querying sensors from the BMC (BCU1525 only, (limitations)[#limitations])
+* Changing voltage controller settings (BCU1525 only, see [limitations](#limitations))
+* Querying sensors from the BMC (BCU1525 only, see [limitations](#limitations))
 
 ## Supported Xilinx FPGAs
 
@@ -24,7 +24,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
   * Bittware CVP13
 * Other
   * SQRL Acorns (requires FTDI/JTAG cable)
-  * Trustfarm TM-FM2L (requires JTAG cable)
+  * Trustfarm TM-FM2L (requires FTDI/JTAG cable)
 
 ## Limitations
 
