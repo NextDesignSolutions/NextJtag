@@ -92,6 +92,71 @@ The changes made by Zadig will be persistent, even after reboots.  To remove the
 
 In order to tell NextJTAG to use the open source driver, the `--prefer_libftdi` must be passed on the command line.
 
+## Usage
+
+To list all FGPAs detected on the system, run `nextjtag` without any arguments.  This does not require a license, so it is a good way to test the permissions and drivers are setup correctly on your system before buying a license.
+
+All other usages of `nextjtag` require a license.  It is required that you specify at least one arugment that is a "Device Selector" (to specify which devices to use) and at least one argument that is a "Command" (to specify what you want to do).  If multiple commands are given, the comamnds will be executed in the order given.  If multiple device selectors are given, then all commands will be executed on the selected devices.
+
+Here is the list of all the options (you can also run `nextjtag -h` to see the same output):
+
+```
+Usage: nextjtag [OPTIONS]
+
+Options:
+  -h,--help                   Print this help message and exit
+  --version                   Display the version of this tool and exit
+  -m,--multithread            Enables multi threaded mode, with one thread per FGPA
+  --max-threads COUNT         Limits how many threads will be run concurrently in multithreaded mode
+
+
+Device Selectors:
+  -a,--all                    Selects all detected devices
+  -f,--fpga FPGA              Select all devices using the given FPGA
+  -d,--device INDEX           Select device to use by index
+  -j,--serial SERIAL          Select device to use by FTDI serial number
+  -k,--dna DNA                Select device to use by FPGA DNA
+
+
+Commands:
+  -t,--temperature            Performs a read of temperature sysmon/xadc registers
+  -v,--voltage                Performs a read of voltage sysmon/xadc registers
+  -s,--sysmon OP              Performs a read or write (if value is given) operation to a
+                              sysmon/xadc register.
+                              OP: <reg>[:<value>]
+  -e,--extended LIST          Reads a comma separated list of extended sensors from the BMC. List of
+                              supported sensors is board specific; use "all" to read all sensors. On
+                              some boards, such as the BCU1525, this operation will clear the
+                              currently loaded bitstream.
+  -c,--clear                  Performs a clear operation, which clears the existing bitstream from
+                              CFG mem (not persistent)
+  -r,--reload                 Performs a reload operation, which reloads the bitstream from flash
+  -b,--bitstream PATH:FILE    Performs a program operation, which loads a bitstream (.bit or .bin)
+                              file into CFG mem (not persistent)
+  -w,--wait SECONDS           Pauses for the given seconds after the previous operation
+
+
+Expert Options:
+  --set-voltage VOLTAGE       Changes the FPGA core voltage through the BMC (not persistent).
+                              WARNING: INCORRECT VALUES CAN CAUSE PERMANENT DAMAGE TO YOUR FPGA!
+                              This option will also clear the current bitstream, so make sure to
+                              reprogram it afterwards. Voltage is programatically limited to 0.64V
+                              to 0.95V, but each FPGA is unique and may not function across the
+                              entire range. Only supported board is BCU1525; this option is ignored
+                              for all other boards.
+  --disable-voltage-limit     Disables artificial voltage limits of the --set-voltages option. Not
+                              recommended, only for the brave or the stupid.
+  --prefer-libftdi            Uses open source FTDI driver for JTAG communication (default for
+                              Linux)
+  --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
+                              Windows)
+  --force-ftd2xx-reload       Forcibly unloads and reloads the proprietary FTDI driver in Windows
+                              and exits. This an experimental method to recover USB devices that are
+                              stuck and no longer visible to the driver. For best results, close any
+                              other programs that use USB to communicate with the FPGA before
+                              running this.  Must be run as Administrator.
+```
+
 ## Examples
 
 Query Device DNAs from all attached devices (no license required):
