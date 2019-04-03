@@ -48,7 +48,7 @@ Licensing is done per FPGA and is tied to the FPGA's Device DNA (a unique identi
 
 Licenses are stored in a text file(s), with each line specifying the Device DNA and associated license separated by whitespace.  Blank lines and lines starting with `#` are ignored.  There are two ways to use license files:
 
-1. If the `NEXTJTAG_LICENSE` environment variable is set, NextJTAG will use the value as the (relative or absolute) path to the license file.  Multiple files can be set using a colon separated list.
+1. If the `NEXTJTAG_LICENSE` environment variable is set, NextJTAG will use the value as the (relative or absolute) path to the license file.  Multiple files can be set using a colon (Linux) or semicolon (Windows) separated list.
 2. If the environment variable is not set, then NextJTAG will automatically use any txt file that starts with `nextjtag_license` that is in the current directory or in the directory where the NextJTAG tool is located in.  For example, `nextjtag_license_foo.txt` would be matched.
 
 Licenses must be purchased from NextDesign Solutions directly or through an authorized third party vendor ([see purchasing options](#purchasing-options)).  Licenses are valid indefinitely, but will only work with the same major version of NextJTAG.  For example, a 1.x license will work with versions 1.0 and 1.1, but will not with version 2.0.  In general, bug fixes and basic new features will not result in a major version bump.
