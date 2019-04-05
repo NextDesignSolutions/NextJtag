@@ -34,7 +34,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
   * There is not a way to run different operations on different devices in the same command.  NextJTAG will need to be called multiple times.
   * Many advanced operations (such as changing the voltage) requires BMC access, which is different for every board.  We currently only support BMC operations on the BCU1525, but may add more in the future depending on demand and vendor cooperation.
 * BCU1525
-  * BMC access requires loading a special bitstream, which takes a few second and causes the previous bitstream to be overwritten.  This means that setting the voltage or reading BMC sensors can't be done while mining.
+  * BMC access requires loading a special bitstream, which takes a few seconds and causes the previous bitstream to be overwritten.  This means that setting the voltage or reading BMC sensors can't be done while mining.
   * NextJTAG will refuse to set voltage on an out of date BMC (this is shown as error 0x6d)
 
 ## Supported Platforms
