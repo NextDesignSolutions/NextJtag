@@ -10,6 +10,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 * Reloading the bitstream from flash
 * Reading the min, max, and current temperature and voltage
 * Reading/writing XADC/SYSMON registers
+* Reading/writing to AXI over JTAG
 * Changing voltage controller settings (BCU1525 only, see [limitations](#limitations))
 * Querying sensors from the BMC (BCU1525 only, see [limitations](#limitations))
 
@@ -18,7 +19,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 * XCVU9P
   * Xilinx VCU1525
   * SQRL BCU1525
-  * Bittware BTU9P
+  * TUL BTU9P
   * Huawei FX600 (requires FTDI/JTAG cable)
 * XCVU13
   * Bittware CVP13
@@ -124,6 +125,15 @@ Commands:
   -s,--sysmon OP              Performs a read or write (if value is given) operation to a
                               sysmon/xadc register.
                               OP: <reg>[:<value>]
+  -x,--axi32 OP               [experimental] Performs a 32-bit AXI read or write (if value_list is
+                              given) operation over JTAG. Requires bitstream support.
+                              OP: <index>:<address>[<mode>]:[<cache>]:<count>[:<value_list>]
+                              <index> - 0 based index for which AXI bus to use
+                              <address> - axi bus address
+                              <mode> - burst type, defaults to FIXED, specify a plus (+) for INCR
+                              <cache> - bufferable(b), modifiable(m), read-alloc(r), write-alloc(w)
+                              <count> - num of words, >256 will be split into multiple txns
+                              <value_list> - comma sep list of words to write, omit for read
   -e,--extended LIST          Reads a comma separated list of extended sensors from the BMC. List of
                               supported sensors is board specific; use "all" to read all sensors. On
                               some boards, such as the BCU1525, this operation will clear the
@@ -146,6 +156,14 @@ Expert Options:
                               for all other boards.
   --disable-voltage-limit     Disables artificial voltage limits of the --set-voltages option. Not
                               recommended, only for the brave or the stupid.
+  --disable-known-bmc-check   Disables version checks that ensure that known good BMC versions are
+                              used. Some BMC features may not work correctly on boards with
+                              unsupported BMC versions.
+  --disable-bs-check          Disables the check that ensures .bit bitstreams can only be programmed
+                              on the correct FPGA.
+  --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
+                              cards default to 10000000, 15000000 or 30000000 (max), depending on
+                              FTDI chip.
   --prefer-libftdi            Uses open source FTDI driver for JTAG communication (default for
                               Linux)
   --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
@@ -205,6 +223,17 @@ $ nextjtag -a -m -e vccint,vr_ctrl_temp
 [2019-03-24 07:01:54] Device 2: Extended Sensors: vccint = 0.8500, vr_ctrl_temp = 37.0000
 [2019-03-24 07:01:54] Device 1: Extended Sensors: vccint = 0.8010, vr_ctrl_temp = 35.0000
 [2019-03-24 07:01:54] Device 0: Extended Sensors: vccint = 0.8010, vr_ctrl_temp = 35.7500
+```
+
+Write 9 words to AXI address 0x1004 and read 13 words from AXI address 0x1000 (needs compatible bitstream loaded, requires v2.2+):
+```
+$ nextjtag -a -x 0:0x1004::9:0x5c,0x02,0x0c,0x00,0x00,0x0c,0x00,0x5c,0x03 -x 0:0x1000::13
+[2019-06-11 02:21:20] Device 0: AXI[0] Write 9 word(s) to 0x1004: [OKAY]
+[2019-06-11 02:21:20] Device 0: AXI[0] Read 13 word(s) from 0x1000: [OKAY]
+    0000:  0000005c  00000002  0000008c  00000000
+    0010:  00000004  00000003  00000000  00000001
+    0020:  00000000  00000094  00000000  0000005c
+    0030:  00000003
 ```
 
 ## Troubleshooting
