@@ -13,16 +13,22 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 * Reading/writing to AXI over JTAG
 * Changing voltage controller settings (BCU1525 only, see [limitations](#limitations))
 * Querying sensors from the BMC (BCU1525 only, see [limitations](#limitations))
+* REST API for remote control
 
 ## Supported Xilinx FPGAs
 
+* XCU200
+  * Xilinx Alveo U200
 * XCVU9P
   * Xilinx VCU1525
   * SQRL BCU1525
   * TUL BTU9P
   * Huawei FX600 (requires FTDI/JTAG cable)
-* XCVU13
+* XCVU13P
   * Bittware CVP13
+* XCVU33P
+  * SQRL FK1533
+* XCVU35P
 * Other
   * SQRL Acorns (requires FTDI/JTAG cable)
   * Trustfarm TM-FM2L (requires FTDI/JTAG cable)
@@ -93,11 +99,13 @@ The changes made by Zadig will be persistent, even after reboots.  To remove the
 
 In order to tell NextJTAG to use the open source driver, the `--prefer_libftdi` must be passed on the command line.
 
-## Usage
+## CLI Usage
+
+The CLI `nextjtag` tool has two modes. The default mode is direct mode, in which it will communicate directly with FPGAs locally connected the system. The second mode is client mode, in which it will connect to a NextJtag server instance and act as a remote control. To enable client mode, use the `--remote=<server>` flag.
 
 To list all FGPAs detected on the system, run `nextjtag` without any arguments.  This does not require a license, so it is a good way to test the permissions and drivers are setup correctly on your system before buying a license.
 
-All other usages of `nextjtag` require a license.  It is required that you specify at least one arugment that is a "Device Selector" (to specify which devices to use) and at least one argument that is a "Command" (to specify what you want to do).  If multiple commands are given, the comamnds will be executed in the order given.  If multiple device selectors are given, then all commands will be executed on the selected devices.
+All other usages of `nextjtag` require a license.  It is required that you specify at least one argument that is a "Device Selector" (to specify which devices to use) and at least one argument that is a "Command" (to specify what you want to do).  If multiple commands are given, the commands will be executed in the order given.  If multiple device selectors are given, then all commands will be executed on the selected devices.
 
 Here is the list of all the options (you can also run `nextjtag -h` to see the same output):
 
@@ -121,7 +129,9 @@ Device Selectors:
 
 Commands:
   -t,--temperature            Performs a read of temperature sysmon/xadc registers
-  -v,--voltage                Performs a read of voltage sysmon/xadc registers
+  -v,--voltage,--vccint       Performs a read of vccint sysmon/xadc registers
+  --vccaux                    Performs a read of vccaux sysmon/xadc registers
+  --vccbram                   Performs a read of vccbram sysmon/xadc registers
   -s,--sysmon OP              Performs a read or write (if value is given) operation to a
                               sysmon/xadc register.
                               OP: <reg>[:<value>]
@@ -146,11 +156,20 @@ Commands:
   -w,--wait SECONDS           Pauses for the given seconds after the previous operation
 
 
+Client Options:
+  --remote URL                Enables client mode. This will cause all commands to be executed
+                              remotely using the given URL to a nextjtag_server instance. Protocol
+                              defaults to HTTP unless specified. Port defaults to 19080 unless a
+                              protocol or port is specified. To connect to a server running on the
+                              same machine, the value "localhost" can be used.
+  --rescan                    Issues a rescan on the server before retrieving devices
+
+
 Expert Options:
   --set-voltage VOLTAGE       Changes the FPGA core voltage through the BMC (not persistent).
                               WARNING: INCORRECT VALUES CAN CAUSE PERMANENT DAMAGE TO YOUR FPGA!
                               This option will also clear the current bitstream, so make sure to
-                              reprogram it afterwards. Voltage is programatically limited to 0.64V
+                              reprogram it afterwards. Voltage is programmatically limited to 0.64V
                               to 0.95V, but each FPGA is unique and may not function across the
                               entire range. Only supported board is BCU1525; this option is ignored
                               for all other boards.
@@ -173,6 +192,46 @@ Expert Options:
                               stuck and no longer visible to the driver. For best results, close any
                               other programs that use USB to communicate with the FPGA before
                               running this.  Must be run as Administrator.
+```
+
+## Server Usage
+
+The `nextjtag_server` a long running version of nextjtag, which accepts commands through a REST API. It is able to accept commands from multiple clients concurrently, and run commands targeting different FPGA boards in parallel. When conflicting commands are received that target the same board at the same time, the server will execute the first request and reject the others until that board is no longer busy. Similar to the CLI tool, a license is required for full functionality.
+
+When the server first starts up, it will scan the system for FPGA and build a list, but will not open them by default. Clients are responsible for opening and initializing devices. When new devices are connected or disconnected from the system while the server is running, they will not be detected until the server runs a "rescan" operation. The rescan will add new devices to the internal list and prune devices that are no longer detected. The rescan operation can be triggered through the REST API or using the `--rescan`` flag in `nextjtag` client mode.
+
+For performance reasons, the server will cache any bitstreams it receives for programming in RAM. This can cause the server to use a large amount of memory if many bitstreams are uploaded over the lifetime of the server. It may be necessary to restart the server from time to time, in order to clear the cache.
+
+API documentation is packaged with each release.
+
+Here is the list of all the options (you can also run `nextjtag_server -h` to see the same output):
+
+```
+Usage: nextjtag_server [OPTIONS]
+
+Options:
+  -h,--help                   Print this help message and exit
+  --version                   Display the version of this tool and exit
+  -b,--bind ADDR              Selects which IP address to bind the server to. This determines where
+                              it will accept incoming requests from. Use 0.0.0.0 to accept requests
+                              from anywhere. Defaults to 127.0.0.1.
+  -p,--port PORT              Selects port to listen to listen on. Defaults to 19080.
+  -t,--threads COUNT          Sets how many worker threads the server users. This determines how
+                              many simultaneous requests the server can handle. Defaults to 32.
+  -r,--auto-rescan SECONDS    Rescans for new USB devices every N seconds. Setting to zero disables
+                              this feature. Defaults to disabled.
+  -a,--auto-init              Automatically attempts to open and initialize devices discovered
+                              during rescan.
+
+
+Expert Options:
+  --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
+                              cards default to 10000000, 15000000 or 30000000 (max), depending on
+                              FTDI chip.
+  --prefer-libftdi            Uses open source FTDI driver for JTAG communication (default for
+                              Linux)
+  --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
+                              Windows)
 ```
 
 ## Examples
@@ -236,6 +295,22 @@ $ nextjtag -a -x 0:0x1004::9:0x5c,0x02,0x0c,0x00,0x00,0x0c,0x00,0x5c,0x03 -x 0:0
     0030:  00000003
 ```
 
+Start a server instance that accepts connections from any interface
+```
+$ nextjtag_server -b 0.0.0.0
+Starting Server on 0.0.0.0:19080
+```
+
+Trigger a rescan on a remote server and program a bitstream:
+```
+$ nextjtag --remote=10.176.4.57 --rescan -d0 -b 0xToken/VCU1525_0xToken_13GHS.bit
+Connected to NextJtag Server 2.4.0 (1da765824d319c2a173ec4c60bfd8944ae432365)
+[2019-09-23 04:01:20] Preload: Uploading VCU1525_0xToken_13GHS.bit: STARTING...
+[2019-09-23 04:01:43] Preload: Uploading VCU1525_0xToken_13GHS.bit: SUCCESS
+[2019-09-23 04:01:43] Device 0: Programming VCU1525_0xToken_13GHS.bit: STARTING...
+[2019-09-23 04:02:07] Device 0: Programming VCU1525_0xToken_13GHS.bit: SUCCESS
+```
+
 ## Troubleshooting
 
 How to fix some common problems.
@@ -252,38 +327,38 @@ Check that your FPGAs are plugged in.  On Linux, you can do `lsusb` and search f
 
 If it was previously working on Windows, but devices are not showing up now, then sometimes the FTDI driver gets stuck and prevents NextJTAG from opening deivces.  You can try running NextJTAG with the experimental `--force_ftd2xx_reload` option to attempt to get it unstuck.  If that doesn't work, you can try unplugging and plugging the device back in, or rebooting.
 
-#### Unable to open device (no device name)
+#### Open Error (no device name)
 
 ```
 $ nextjtag
 List of available devices:
-  0:  (serial: , Unable to open device (0x10))
-  1:  (serial: , Unable to open device (0x10))
-  2:  (serial: , Unable to open device (0x10))
+  0:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
+  1:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
+  2:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
 ```
 
 On Linux, this is probably a [permission](#permissions-linux-only) problem.  Try running as root or installing udev rules.
 
 On Windows, this might be a [driver](#driver-install-windows-only) issue.  Sometimes a reboot will help.
 
-#### Unable to open device (with device name)
+#### Open Error (with device name)
 
 ```
 $ nextjtag
 List of available devices:
   0: CB-U1-AEBE (serial: 21440289L034, FPGA: XCVU9P, DNA: 400200000128a7072d60e145)
-  1: CB-U1-AEBE (serial: 21430289400C, Unable to open device (0x10))
+  1: CB-U1-AEBE (serial: 21430289400C, Init Failed (LibFTDI Open Error - 0x10))
   2: CB-U1-AEBE (serial: 21440289K059, FPGA: XCVU9P, DNA: 40020000012922a7151121c5)
 ```
 
 The device is probably already open by another process.  Check for other instances of NextJTAG that are running.  Also check if Vivado is running, and if so, make sure it isn't connected to the FPGA.  If that doesn't work, you can try rebooting.
 
-#### Unable to initialize device
+#### No FPGAs found
 
 ```
 $ nextjtag
 List of available devices:
-  0: Digilent USB Device (serial: 210241433626, Unable to initialize FPGA (0x54))
+  0: Digilent USB Device (serial: 210241433626, Init Failed (No FPGAs Found - 0x54))
 ```
 
 This means that it was able to open the device, but it received something unexpected from the FTDI chip.  For example, this can happen if you use NextJTAG with a non-supported FPGA.  This can also indicate a hardware issue, when the FPGA is not responding to JTAG scan requests.  In some cases, power cycling may fix the issue.
