@@ -2,61 +2,142 @@
 
 NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs over USB.  It supports basic operations, such as checking the temperature and loading bitstreams.  Platform and FPGA support are fairly limited, but more are coming soon.  To gain access to all features, a [license](#Licensing) must be purchased.  Check the [releases](../../releases) to download the latest binaries.
 
-## Supported Features
+## Feature Highlights
 
-* Querying Device DNAs of attached FGPAs
-* Loading bitstreams in parallel (not persistent across power cycling)
-* Clearing the currently loaded bitstream
-* Reloading the bitstream from flash
-* Reading the min, max, and current temperature and voltage
+* Query Device DNA of Xilinx FPGAs (free)
+* Load bitstreams in parallel into configuration memory
+* Clear the currently loaded bitstream
+* Reload bitstreams from flash
+* Reading the FPGA min/max/current temperature and voltage
 * Reading/writing XADC/SYSMON registers
 * Reading/writing to AXI over JTAG
-* Changing voltage controller settings (BCU1525 only, see [limitations](#limitations))
-* Querying sensors from the BMC (BCU1525 only, see [limitations](#limitations))
+* Changing voltage controller settings (not supported on all boards)
+* Querying sensors from the BMC (not supported on all boards)
 * REST API for remote control
 
-## Supported Xilinx FPGAs
+## Supported Xilinx FPGAs and Boards
 
-* XCU200
-  * Xilinx Alveo U200
-* XCVU9P
-  * Xilinx VCU1525
-  * SQRL BCU1525
-  * TUL BTU9P
-  * Huawei FX600 (requires FTDI/JTAG cable)
-* XCVU13P
-  * Bittware CVP13
-* XCVU33P
-  * SQRL FK1533
-* XCVU35P
-* Other
-  * SQRL Acorns (requires FTDI/JTAG cable)
-  * Trustfarm TM-FM2L (requires FTDI/JTAG cable)
+<table>
+  <tr>
+    <th>FPGA</th>
+    <th>Board</th>
+    <th>JTAG</th>
+    <th>FPGA Program</th>
+    <th>FPGA Sensors</th>
+    <th>Voltage Control</th>
+    <th>BMC Sensors</th>
+  </tr>
+  <tr>
+    <td>XCU200</td>
+    <td>Xilinx Alveo U200</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td rowspan="4">XCVU9P</td>
+    <td>Xilinx VCU1525</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td>SQRL BCU1525</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes<sup>1</sup></td>
+    <td>Yes<sup>1</sup></td>
+  </tr>
+  <tr>
+    <td>TUL BTU1525</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td>TUL BTU1525 PRO</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td>XCVU13P</td>
+    <td>Bittware CVP-13</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>Yes<sup>2</sup></td>
+    <td>Yes<sup>2</sup></td>
+  </tr>
+  <tr>
+    <td>XCVU33P</td>
+    <td>SQRL FK33</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td>Artix-7</td>
+    <td>SQRL Acorn</td>
+    <td>Custom</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td>Kintex-7</td>
+    <td>Trustfarm TM-FM2L</td>
+    <td>Custom</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+</table>
+
+<p>
+<sup>1</sup> Bitstream support requried for BMC access<br>
+<sup>2</sup> Bittware cards require Bittworks II Toolkit Lite for BMC access (see <a href="#bittware-board-setup">Bittware Board Setup</a>)
+</p>
 
 ## Limitations
 
 * General
-  * Requires USB to be connected to an onboard FTDI chip or an external FTDI/JTAG cable)
+  * Requires USB to be connected to an onboard FTDI chip or an external FTDI/JTAG cable
   * Regular temperature and voltage readings use XADC/SYSMON, which may not give the same value as sensors elsewhere on the board.  In addition, some bitstreams seem to break the min/max functionality on the temperature and voltage sensors.
-  * There is not a way to run different operations on different devices in the same command.  NextJTAG will need to be called multiple times.
-  * Many advanced operations (such as changing the voltage) requires BMC access, which is different for every board.  We currently only support BMC operations on the BCU1525, but may add more in the future depending on demand and vendor cooperation.
+  * There is not a way to run different operations on different devices in the same CLI command.  NextJTAG will need to be called multiple times.
+  * Many advanced operations (such as changing the voltage) requires BMC access, which is different for every board.  We currently only support BMC operations on the BCU1525 and any Bittware board (see [Bittware Board Setup](#bittware-board-setup)), but may add more in the future depending on demand and vendor cooperation.
 * BCU1525
   * BMC access requires loading a special bitstream, which takes a few seconds and causes the previous bitstream to be overwritten.  This means that setting the voltage or reading BMC sensors can't be done while mining.
   * NextJTAG will refuse to set voltage on an out of date BMC (this is shown as error 0x6d)
 
 ## Supported Platforms
 
-* Linux (x86-64)
+* Linux (x86-64, aarch64)
 * Windows (x64)
 
 ## Licensing
 
 Licensing is done per FPGA and is tied to the FPGA's Device DNA (a unique identifier fused into the chip by the manufacturer).  The majority of features require a license to use.  The only feature that does not require a license is to list the Device DNAs of all FPGAs connected to the system.
 
-Licenses are stored in a text file(s), with each line specifying the Device DNA and associated license separated by whitespace.  Blank lines and lines starting with `#` are ignored.  There are two ways to use license files:
+Licenses are stored in a text file(s), with each line specifying the Device DNA and associated license separated by whitespace.  Blank lines and lines starting with `#` are ignored. There are two ways to use license files:
 
 1. If the `NEXTJTAG_LICENSE` environment variable is set, NextJTAG will use the value as the (relative or absolute) path to the license file.  Multiple files can be set using a colon (Linux) or semicolon (Windows) separated list.
 2. If the environment variable is not set, then NextJTAG will automatically use any txt file that starts with `nextjtag_license` that is in the current directory or in the directory where the NextJTAG tool is located in.  For example, `nextjtag_license_foo.txt` would be matched.
+
+Note: When using NextJTAG server, licenses can be uploaded/downlaoded from the server through the REST API. The NextJTAG CLI toolwill use this automatically to get missing licenses.
 
 Licenses must be purchased from NextDesign Solutions directly or through an authorized third party vendor ([see purchasing options](#purchasing-options)).  Licenses are valid indefinitely, but will only work with the same major version of NextJTAG.  For example, a 1.x license will work with versions 1.0 and 1.1, but will not with version 2.0.  In general, bug fixes and basic new features will not result in a major version bump.
 
@@ -98,6 +179,18 @@ The open source driver is around for legacy reasons, and not recommended for mos
 The changes made by Zadig will be persistent, even after reboots.  To remove the open source driver, just install the proprietary driver again from step 1.  **You will need to do this in order to use Vivado again after running these steps**
 
 In order to tell NextJTAG to use the open source driver, the `--prefer_libftdi` must be passed on the command line.
+
+## Bittware Board Setup
+
+To unlock full functionality for Bittware FPGA boards (such as voltage control and extended sensors), the Bittworks II Toolkit Lite (version 2018.6 or newer) must be installed and in the default path. The toolkit software can be obtained from your board vendor. Next, the boards must be configured using the `bwconfig` or `bwconfig-gui` utility (part of the toolkit), by scanning for USB devices and mapping in the boards. Finally, a map file must be generated, which associates the Bittware serial numbers with your FPGA's device DNA. The map file is provided to NextJTAG using the `--bw-map=` argument.  Here is an example map file:
+
+```
+# Nextjtag DNA to Bittworks Serial Map
+#
+400200000129076225200585        205965
+```
+
+A helper utility called `nextjtag_bwutil` is provided with the NextJTAG release to automate the map file generation. Simply execute `nextjtag_bwutil map` to start the mapping proces. Please note that the utility will power cycle all configured Bittware boards at least once, so it is recommended to ensure all FPGAs are idle before starting. Also ensure that the `bwmonitor-gui` is not running and connected to a board, since that will prevent that board from being scanned.
 
 ## CLI Usage
 
@@ -192,6 +285,14 @@ Expert Options:
                               stuck and no longer visible to the driver. For best results, close any
                               other programs that use USB to communicate with the FPGA before
                               running this.  Must be run as Administrator.
+  --bw-map FILE               Load a Bittware map file, which contains maps the device DNA to
+                              Bittware serial numbers. This will enable the Bittware libraries,
+                              which unlocks advanced features for Bittware boards, such as voltage
+                              control. The Bittworks II Toolkit Lite (2018.6 or later) must be
+                              installed and in the default path. Additionally, the Bittware boards
+                              must have already been configured using the bwconfig utility. The map
+                              file format consists of lines with the dna followed by the serial,
+                              separated by one or more spaces. Lines starting with # are ignored.
 ```
 
 ## Server Usage
@@ -222,6 +323,7 @@ Options:
                               this feature. Defaults to disabled.
   -a,--auto-init              Automatically attempts to open and initialize devices discovered
                               during rescan.
+  -l,--license-upload         Enables uploading and deleting licenses through the REST API.
 
 
 Expert Options:
@@ -232,6 +334,14 @@ Expert Options:
                               Linux)
   --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
                               Windows)
+  --bw-map FILE               Load a Bittware map file, which contains maps the device DNA to
+                              Bittware serial numbers. This will enable the Bittware libraries,
+                              which unlocks advanced features for Bittware boards, such as voltage
+                              control. The Bittworks II Toolkit Lite (2018.6 or later) must be
+                              installed and in the default path. Additionally, the Bittware boards
+                              must have already been configured using the bwconfig utility. The map
+                              file format consists of lines with the dna followed by the serial,
+                              separated by one or more spaces. Lines starting with # are ignored.
 ```
 
 ## Examples
@@ -266,22 +376,23 @@ $ nextjtag -m -f xcvu9p -b vcu1525_keccak_21_600.bit
 [2019-03-24 06:54:39] Device 2: Programming bitstream: SUCCESS
 ```
 
-Set voltage for device with Device DNA of 400200000117ab290d3102c5 (BCU1525 only, requires v2.0+):
+Set voltage for device with Device DNA of 400200000117ab290d3102c5
 ```
 $ nextjtag -k 400200000117ab290d3102c5 --set-voltage=0.72
-[2019-01-30 02:10:15] Device 0: Changing voltage: STARTING...
-[2019-01-30 02:10:23] Device 0: Changing voltage: SUCCESS
+[2019-11-22 02:04:47] Device 0: BMC Setup: STARTING...
+[2019-11-22 02:04:53] Device 0: BMC Setup: SUCCESS
+[2019-11-22 02:04:53] Device 0: Changing voltage to 0.72V: SUCCESS
 ```
 
-Read VCCINT and Voltage Regulator Controller Temperature from the BMC (BCU1525 only, requires v2.1+)
+Read FGPA core current and board temperature from CVP-13 (uses Bittworks library)
 ```
-$ nextjtag -a -m -e vccint,vr_ctrl_temp
-[2019-03-24 07:01:44] Device 2: Extended Sensors: STARTING READ...
-[2019-03-24 07:01:44] Device 1: Extended Sensors: STARTING READ...
-[2019-03-24 07:01:44] Device 0: Extended Sensors: STARTING READ...
-[2019-03-24 07:01:54] Device 2: Extended Sensors: vccint = 0.8500, vr_ctrl_temp = 37.0000
-[2019-03-24 07:01:54] Device 1: Extended Sensors: vccint = 0.8010, vr_ctrl_temp = 35.0000
-[2019-03-24 07:01:54] Device 0: Extended Sensors: vccint = 0.8010, vr_ctrl_temp = 35.7500
+$ nextjtag --bw-map=bw.txt -f xcvu13p -e core_current,board_temperature
+Using Bittware map file: bw.txt
+Checking for Bittware Toolkit Installaiton
+Found version: 2019.1.14.54399
+[2019-11-22 02:18:39] Device 1: BMC Setup: STARTING...
+[2019-11-22 02:18:39] Device 1: BMC Setup: SUCCESS
+[2019-11-22 02:18:39] Device 1: Extended Sensors: core_current = 10.0000, board_temperature = 32.0000
 ```
 
 Write 9 words to AXI address 0x1004 and read 13 words from AXI address 0x1000 (needs compatible bitstream loaded, requires v2.2+):
@@ -384,8 +495,8 @@ On Linux, it depends on your terminal program.
 
 ```
 $ nextjtag -a --set-voltage 0.8
-[2019-03-24 07:18:06] Device 0: Changing voltage to 0.80V: STARTING...
-[2019-03-24 07:18:16] Device 0: Changing voltage to 0.80V: ERROR (0x6d)
+[2019-11-22 02:21:53] Device 0: BMC Setup: STARTING...
+[2019-11-22 02:21:58] Device 0: BMC Setup: ERROR (BCU BMC is too old - 0x6d)
 ```
 
 This means the BMC version is out of date. The instructions to update the BMC firmware for BCU1525 cards is [here](https://miner.all-mine.co/instructions/guides/updating-bcu1525-bmc-firmware).
