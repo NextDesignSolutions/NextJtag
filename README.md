@@ -54,7 +54,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>Yes<sup>1</sup></td>
   </tr>
   <tr>
-    <td>TUL BTU1525</td>
+    <td>TUL BTU9P</td>
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
@@ -62,7 +62,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>No</td>
   </tr>
   <tr>
-    <td>TUL BTU1525 PRO</td>
+    <td>TUL BTU9P PRO</td>
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
