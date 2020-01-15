@@ -28,7 +28,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <th>BMC Sensors</th>
   </tr>
   <tr>
-    <td>XCU200</td>
+    <td rowspan="1">XCU200</td>
     <td>Xilinx Alveo U200</td>
     <td>USB</td>
     <td>Yes</td>
@@ -37,7 +37,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>No</td>
   </tr>
   <tr>
-    <td rowspan="4">XCVU9P</td>
+    <td rowspan="5">XCVU9P</td>
     <td>Xilinx VCU1525</td>
     <td>USB</td>
     <td>Yes</td>
@@ -52,6 +52,14 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>Yes</td>
     <td>Yes<sup>1</sup></td>
     <td>Yes<sup>1</sup></td>
+  </tr>
+  <tr>
+    <td>SQRL JCM9</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
   </tr>
   <tr>
     <td>TUL BTU9P</td>
@@ -70,7 +78,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>No</td>
   </tr>
   <tr>
-    <td>XCVU13P</td>
+    <td rowspan="1">XCVU13P</td>
     <td>Bittware CVP-13</td>
     <td>USB</td>
     <td>Yes</td>
@@ -79,7 +87,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>Yes<sup>2</sup></td>
   </tr>
   <tr>
-    <td>XCVU33P</td>
+    <td rowspan="2">XCVU33P</td>
     <td>SQRL FK33</td>
     <td>USB</td>
     <td>Yes</td>
@@ -88,7 +96,24 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>No</td>
   </tr>
   <tr>
-    <td>Artix-7</td>
+    <td>SQRL JCM33</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td rowspan="1">XCVU35P</td>
+    <td>SQRL JCM35</td>
+    <td>USB</td>
+    <td>Yes</td>
+    <td>Yes</td>
+    <td>No</td>
+    <td>No</td>
+  </tr>
+  <tr>
+    <td rowspan="1">Artix-7</td>
     <td>SQRL Acorn</td>
     <td>Custom</td>
     <td>Yes</td>
@@ -108,7 +133,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 </table>
 
 <p>
-<sup>1</sup> Bitstream support requried for BMC access<br>
+<sup>1</sup> Bitstream support required for BMC access<br>
 <sup>2</sup> Bittware cards require Bittworks II Toolkit Lite for BMC access (see <a href="#bittware-board-setup">Bittware Board Setup</a>)
 </p>
 
@@ -215,8 +240,11 @@ Options:
 Device Selectors:
   -a,--all                    Selects all detected devices
   -f,--fpga FPGA              Select all devices using the given FPGA
-  -d,--device INDEX           Select device to use by index
-  -j,--serial SERIAL          Select device to use by FTDI serial number
+  -d,--device INDEX[.FPGA]    Select device to use by numerical index. An optional numerical suffix
+                              can be used to select the FPGA on boards multiple FPGAs.
+  -D,--description DESC       Select device to use by FTDI description
+  -j,--serial SERIAL[.FPGA]   Select device to use by FTDI serial number. An optional numerical
+                              suffix can be used to select the FPGA on boards multiple FPGAs.
   -k,--dna DNA                Select device to use by FPGA DNA
 
 
@@ -244,8 +272,15 @@ Commands:
   -c,--clear                  Performs a clear operation, which clears the existing bitstream from
                               CFG mem (not persistent)
   -r,--reload                 Performs a reload operation, which reloads the bitstream from flash
-  -b,--bitstream PATH:FILE    Performs a program operation, which loads a bitstream (.bit or .bin)
-                              file into CFG mem (not persistent)
+  -b,--bitstream PATH:FILE    Performs a program operation, which loads a complete bitstream (.bit
+                              or .bin file) info CFG mem(not peristent). If a partial bitstream
+                              (.bit file only) is provided, a partial program operation (--partial)
+                              will be performed automatically.
+  --partial PATH:FILE         Performs a partial program operation, which loads a partial bitstream
+                              (.bit or .bin file) into CFG mem (not persistent) without clearing the
+                              previous bitstream. It is recommended to prefer the -b/--bitstream
+                              option for loading partial .bit bitstreams, and only use this for
+                              loading partial .bin bitstreams.
   -w,--wait SECONDS           Pauses for the given seconds after the previous operation
 
 
@@ -276,6 +311,7 @@ Expert Options:
   --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
                               cards default to 10000000, 15000000 or 30000000 (max), depending on
                               FTDI chip.
+  --ignore-sel-errors         Downgrades errors from unmatched selectors to warnings.
   --prefer-libftdi            Uses open source FTDI driver for JTAG communication (default for
                               Linux)
   --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
@@ -351,37 +387,45 @@ Query Device DNAs from all attached devices (no license required):
 ```
 $ nextjtag
 List of available devices:
-  0: CB-U1-AEBE (serial: 21440289L034, FPGA: XCVU9P, DNA: 400200000128a7072d60e145)
-  1: CB-U1-AEBE (serial: 21430289400C, FPGA: XCVU9P, DNA: 400200000117ab290d3102c5)
-  2: CB-U1-AEBE (serial: 21440289K059, FPGA: XCVU9P, DNA: 40020000012922a7151121c5)
+  Board 0: SQRL JCC4P (serial: 160400100098)
+  ├── Device 0.0: XCVU33P (type: FPGA, DNA: 4000000001289ee104f0a445)
+  ├── Device 0.1: XCVU33P (type: FPGA, DNA: 40000000012922a63c1102c5)
+  ├── Device 0.2: XCVU33P (type: FPGA, DNA: 4000000001295d813c504345)
+  └── Device 0.3: XCVU33P (type: FPGA, DNA: 4000000001295d813c40c205)
+  Board 1: CB-U1-AEBE (serial: 21440289L034)
+  └── Device 1.0: XCVU9P (type: FPGA, DNA: 400200000128a7072d60e145)
+  Board 2: CB-U1-AEBE (serial: 21430289400C)
+  └── Device 2.0: XCVU9P (type: FPGA, DNA: 400200000117ab290d3102c5)
+  Board 3: CB-U1-AEBE (serial: 21440289K059)
+  └── Device 3.0: XCVU9P (type: FPGA, DNA: 40020000012922a7151121c5)
 ```
 
-Read the temperature, wait 5 seconds, read the temperature again, and finally read voltage from device 0:
+Read the temperature, wait 5 seconds, read the temperature again, and finally read voltage from device 0.1 (board 0, fpga 1):
 ```
-$ nextjtag -d0 -t -w5 -t -v
-[2019-03-24 06:52:58] Device 0: Temperature: 24.1647°C (min), 25.6568°C (current), 26.1542°C (max)
-[2019-03-24 06:52:58] Device 0: Sleeping: 5 seconds
-[2019-03-24 06:53:03] Device 0: Temperature: 24.1647°C (min), 24.6621°C (current), 26.1542°C (max)
-[2019-03-24 06:53:03] Device 0: Voltage: 0.7939V (min), 0.7969V (current), 0.7998V (max)
+$ nextjtag -d0.1 -t -w5 -t -v
+[2019-12-11 00:24:04] Device 0.1: Temperature: 19.6883°C (min), 23.6673°C (current), 24.6621°C (max)
+[2019-12-11 00:24:04] Device 0.1: Sleeping: 5 seconds
+[2019-12-11 00:24:09] Device 0.1: Temperature: 19.6883°C (min), 23.6673°C (current), 24.6621°C (max)
+[2019-12-11 00:24:09] Device 0.1: Vccint: 0.8467V (min), 0.8467V (current), 0.8496V (max)
 ```
 
 Program bitstream for all XCVU9P FPGAs in parallel:
 ```
 $ nextjtag -m -f xcvu9p -b vcu1525_keccak_21_600.bit
-[2019-03-24 06:53:59] Device 1: Programming bitstream: STARTING...
-[2019-03-24 06:53:59] Device 2: Programming bitstream: STARTING...
-[2019-03-24 06:53:59] Device 0: Programming bitstream: STARTING...
-[2019-03-24 06:54:39] Device 0: Programming bitstream: SUCCESS
-[2019-03-24 06:54:39] Device 1: Programming bitstream: SUCCESS
-[2019-03-24 06:54:39] Device 2: Programming bitstream: SUCCESS
+[2019-03-24 06:53:59] Device 1.0: Programming bitstream: STARTING...
+[2019-03-24 06:53:59] Device 2.0: Programming bitstream: STARTING...
+[2019-03-24 06:53:59] Device 3.0: Programming bitstream: STARTING...
+[2019-03-24 06:54:39] Device 3.0: Programming bitstream: SUCCESS
+[2019-03-24 06:54:39] Device 1.0: Programming bitstream: SUCCESS
+[2019-03-24 06:54:39] Device 2.0: Programming bitstream: SUCCESS
 ```
 
 Set voltage for device with Device DNA of 400200000117ab290d3102c5
 ```
 $ nextjtag -k 400200000117ab290d3102c5 --set-voltage=0.72
-[2019-11-22 02:04:47] Device 0: BMC Setup: STARTING...
-[2019-11-22 02:04:53] Device 0: BMC Setup: SUCCESS
-[2019-11-22 02:04:53] Device 0: Changing voltage to 0.72V: SUCCESS
+[2019-11-22 02:04:47] Device 0.0: BMC Setup: STARTING...
+[2019-11-22 02:04:53] Device 0.0: BMC Setup: SUCCESS
+[2019-11-22 02:04:53] Device 0.0: Changing voltage to 0.72V: SUCCESS
 ```
 
 Read FGPA core current and board temperature from CVP-13 (uses Bittworks library)
@@ -390,16 +434,16 @@ $ nextjtag --bw-map=bw.txt -f xcvu13p -e core_current,board_temperature
 Using Bittware map file: bw.txt
 Checking for Bittware Toolkit Installaiton
 Found version: 2019.1.14.54399
-[2019-11-22 02:18:39] Device 1: BMC Setup: STARTING...
-[2019-11-22 02:18:39] Device 1: BMC Setup: SUCCESS
-[2019-11-22 02:18:39] Device 1: Extended Sensors: core_current = 10.0000, board_temperature = 32.0000
+[2019-11-22 02:18:39] Device 1.0: BMC Setup: STARTING...
+[2019-11-22 02:18:39] Device 1.0: BMC Setup: SUCCESS
+[2019-11-22 02:18:39] Device 1.0: Extended Sensors: core_current = 10.0000, board_temperature = 32.0000
 ```
 
 Write 9 words to AXI address 0x1004 and read 13 words from AXI address 0x1000 (needs compatible bitstream loaded, requires v2.2+):
 ```
 $ nextjtag -a -x 0:0x1004::9:0x5c,0x02,0x0c,0x00,0x00,0x0c,0x00,0x5c,0x03 -x 0:0x1000::13
-[2019-06-11 02:21:20] Device 0: AXI[0] Write 9 word(s) to 0x1004: [OKAY]
-[2019-06-11 02:21:20] Device 0: AXI[0] Read 13 word(s) from 0x1000: [OKAY]
+[2019-06-11 02:21:20] Device 0.0: AXI[0] Write 9 word(s) to 0x1004: [OKAY]
+[2019-06-11 02:21:20] Device 0.0: AXI[0] Read 13 word(s) from 0x1000: [OKAY]
     0000:  0000005c  00000002  0000008c  00000000
     0010:  00000004  00000003  00000000  00000001
     0020:  00000000  00000094  00000000  0000005c
@@ -418,8 +462,8 @@ $ nextjtag --remote=10.176.4.57 --rescan -d0 -b 0xToken/VCU1525_0xToken_13GHS.bi
 Connected to NextJtag Server 2.4.0 (1da765824d319c2a173ec4c60bfd8944ae432365)
 [2019-09-23 04:01:20] Preload: Uploading VCU1525_0xToken_13GHS.bit: STARTING...
 [2019-09-23 04:01:43] Preload: Uploading VCU1525_0xToken_13GHS.bit: SUCCESS
-[2019-09-23 04:01:43] Device 0: Programming VCU1525_0xToken_13GHS.bit: STARTING...
-[2019-09-23 04:02:07] Device 0: Programming VCU1525_0xToken_13GHS.bit: SUCCESS
+[2019-09-23 04:01:43] Device 0.0: Programming VCU1525_0xToken_13GHS.bit: STARTING...
+[2019-09-23 04:02:07] Device 0.0: Programming VCU1525_0xToken_13GHS.bit: SUCCESS
 ```
 
 ## Troubleshooting
@@ -443,9 +487,9 @@ If it was previously working on Windows, but devices are not showing up now, the
 ```
 $ nextjtag
 List of available devices:
-  0:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
-  1:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
-  2:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
+  Board 0:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
+  Board 1:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
+  Board 2:  (serial: , Init Failed (LibFTDI Open Error - 0x10))
 ```
 
 On Linux, this is probably a [permission](#permissions-linux-only) problem.  Try running as root or installing udev rules.
@@ -457,10 +501,12 @@ On Windows, this might be a [driver](#driver-install-windows-only) issue.  Somet
 ```
 $ nextjtag
 List of available devices:
-  0: CB-U1-AEBE (serial: 21440289L034, FPGA: XCVU9P, DNA: 400200000128a7072d60e145)
-  1: CB-U1-AEBE (serial: 21430289400C, Init Failed (LibFTDI Open Error - 0x10))
-  2: CB-U1-AEBE (serial: 21440289K059, FPGA: XCVU9P, DNA: 40020000012922a7151121c5)
-```
+  Board 0: CB-U1-AEBE (serial: 21440289L034)
+  └── Device 1.0: XCVU9P (type: FPGA, DNA: 400200000128a7072d60e145)
+  Board 1: CB-U1-AEBE (serial: 21430289400C, Init Failed (LibFTDI Open Error - 0x10))
+  Board 2: CB-U1-AEBE (serial: 21440289K059)
+  └── Device 3.0: XCVU9P (type: FPGA, DNA: 40020000012922a7151121c5)
+ ```
 
 The device is probably already open by another process.  Check for other instances of NextJTAG that are running.  Also check if Vivado is running, and if so, make sure it isn't connected to the FPGA.  If that doesn't work, you can try rebooting.
 
@@ -469,7 +515,7 @@ The device is probably already open by another process.  Check for other instanc
 ```
 $ nextjtag
 List of available devices:
-  0: Digilent USB Device (serial: 210241433626, Init Failed (No FPGAs Found - 0x54))
+  Board 0: Digilent USB Device (serial: 210241433626, Init Failed (No FPGAs Found - 0x54))
 ```
 
 This means that it was able to open the device, but it received something unexpected from the FTDI chip.  For example, this can happen if you use NextJTAG with a non-supported FPGA.  This can also indicate a hardware issue, when the FPGA is not responding to JTAG scan requests.  In some cases, power cycling may fix the issue.
@@ -478,7 +524,7 @@ This means that it was able to open the device, but it received something unexpe
 
 ```
 $ nextjtag -a -t
-[2019-03-24 07:14:37] Device 0: Temperature: 228.5866°C (min), 25.1594°C (current), -280.2300°C (max)
+[2019-03-24 07:14:37] Device 0.0: Temperature: 228.5866°C (min), 25.1594°C (current), -280.2300°C (max)
 ```
 
 This is a known issue with certain hardware/bitstream configurations, and something we can hopefully provide a workaround for in the future.
@@ -495,8 +541,8 @@ On Linux, it depends on your terminal program.
 
 ```
 $ nextjtag -a --set-voltage 0.8
-[2019-11-22 02:21:53] Device 0: BMC Setup: STARTING...
-[2019-11-22 02:21:58] Device 0: BMC Setup: ERROR (BCU BMC is too old - 0x6d)
+[2019-11-22 02:21:53] Device 0.0: BMC Setup: STARTING...
+[2019-11-22 02:21:58] Device 0.0: BMC Setup: ERROR (BCU BMC is too old - 0x6d)
 ```
 
 This means the BMC version is out of date. The instructions to update the BMC firmware for BCU1525 cards is [here](https://miner.all-mine.co/instructions/guides/updating-bcu1525-bmc-firmware).
