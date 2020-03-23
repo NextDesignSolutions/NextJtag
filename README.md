@@ -92,7 +92,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
-    <td>Yes</td>
+    <td>Yes<sup>1</sup></td>
     <td>No</td>
   </tr>
   <tr>
