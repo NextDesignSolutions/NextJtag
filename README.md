@@ -92,7 +92,7 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
-    <td>No</td>
+    <td>Yes</td>
     <td>No</td>
   </tr>
   <tr>
@@ -305,22 +305,24 @@ Expert Options:
                               recommended, only for the brave or the stupid.
   --disable-known-bmc-check   Disables version checks that ensure that known good BMC versions are
                               used. Some BMC features may not work correctly on boards with
-                              unsupported BMC versions.
+                              unsupported BMC versions. Requires standalone mode.
   --disable-bs-check          Disables the check that ensures .bit bitstreams can only be programmed
                               on the correct FPGA.
+  --enable-allmine-vcu-bmc    Enables BMC access for VCU1525 boards that have the allmine BMC
+                              flashed. Requires standalone mode.
   --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
                               cards default to 10000000, 15000000 or 30000000 (max), depending on
-                              FTDI chip.
+                              FTDI chip. Requires standalone mode.
   --ignore-sel-errors         Downgrades errors from unmatched selectors to warnings.
   --prefer-libftdi            Uses open source FTDI driver for JTAG communication (default for
-                              Linux)
+                              Linux). Requires standalone mode.
   --prefer-ftd2xx             Uses proprietary FTDI driver for JTAG communication (default for
-                              Windows)
+                              Windows). Requires standalone mode.
   --force-ftd2xx-reload       Forcibly unloads and reloads the proprietary FTDI driver in Windows
                               and exits. This an experimental method to recover USB devices that are
                               stuck and no longer visible to the driver. For best results, close any
                               other programs that use USB to communicate with the FPGA before
-                              running this.  Must be run as Administrator.
+                              running this.  Must be run as Administrator. Requires standalone mode.
   --bw-map FILE               Load a Bittware map file, which contains maps the device DNA to
                               Bittware serial numbers. This will enable the Bittware libraries,
                               which unlocks advanced features for Bittware boards, such as voltage
@@ -329,6 +331,7 @@ Expert Options:
                               must have already been configured using the bwconfig utility. The map
                               file format consists of lines with the dna followed by the serial,
                               separated by one or more spaces. Lines starting with # are ignored.
+                              Requires standalone mode.
 ```
 
 ## Server Usage
@@ -363,6 +366,9 @@ Options:
 
 
 Expert Options:
+  --disable-known-bmc-check   Disables version checks that ensure that known good BMC versions are
+                              used. Some BMC features may not work correctly on boards with
+                              unsupported BMC versions.
   --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
                               cards default to 10000000, 15000000 or 30000000 (max), depending on
                               FTDI chip.
