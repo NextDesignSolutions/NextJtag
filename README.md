@@ -338,11 +338,11 @@ Expert Options:
 
 The `nextjtag_server` a long running version of nextjtag, which accepts commands through a REST API. It is able to accept commands from multiple clients concurrently, and run commands targeting different FPGA boards in parallel. When conflicting commands are received that target the same board at the same time, the server will execute the first request and reject the others until that board is no longer busy. Similar to the CLI tool, a license is required for full functionality.
 
-When the server first starts up, it will scan the system for FPGA and build a list, but will not open them by default. Clients are responsible for opening and initializing devices. When new devices are connected or disconnected from the system while the server is running, they will not be detected until the server runs a "rescan" operation. The rescan will add new devices to the internal list and prune devices that are no longer detected. The rescan operation can be triggered through the REST API or using the `--rescan`` flag in `nextjtag` client mode.
+When the server first starts up, it will scan the system for FPGA and build a list, but will not open them by default. Clients are responsible for opening and initializing devices. When new devices are connected or disconnected from the system while the server is running, they will not be detected until the server runs a "rescan" operation. The rescan will add new devices to the internal list and prune devices that are no longer detected. The rescan operation can be triggered through the REST API or using the `--rescan` flag in `nextjtag` client mode.
 
 For performance reasons, the server will cache any bitstreams it receives for programming in RAM. This can cause the server to use a large amount of memory if many bitstreams are uploaded over the lifetime of the server. It may be necessary to restart the server from time to time, in order to clear the cache.
 
-API documentation is packaged with each release.
+API documentation can be found [online](https://www.nextdesign.ai/docs/nextjtag/latest/) and is packaged with each release.
 
 Here is the list of all the options (you can also run `nextjtag_server -h` to see the same output):
 
@@ -385,6 +385,22 @@ Expert Options:
                               file format consists of lines with the dna followed by the serial,
                               separated by one or more spaces. Lines starting with # are ignored.
 ```
+
+## Client Libraries
+
+Starting in v2.7, an open source C++17 client library is packaged with releases for communicating with NextJTAG server instances. Static libraries are provided in the `lib` directory and the source code is under `share/NextJTAG/client`. Some examples are located under `share/NextJTAG/examples`. The library requires libcurl in order to link into an executable.
+
+To build the library or examples, [cmake](https://cmake.org) files have been provided. For example:
+
+```
+$ cd <release>
+$ cmake share/NextJTAG/examples -B build
+$ cmake --build build
+```
+
+If CMake is unable to locate libcurl, the `-DCURL_INCLUDE_DIR=` and `-DCURL_LIBRARY=` command line options to specify the libcurl include path and library path respecitively.
+
+There is also a client implementation written in Go located [here](https://github.com/NextDesignSolutions/njclient).
 
 ## Examples
 
