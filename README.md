@@ -33,8 +33,8 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
-    <td>No</td>
-    <td>No</td>
+    <td>Yes<sup>1,3</sup></td>
+    <td>Yes<sup>1,3</sup></td>
   </tr>
   <tr>
     <td rowspan="5">XCVU9P</td>
@@ -42,8 +42,8 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
     <td>USB</td>
     <td>Yes</td>
     <td>Yes</td>
-    <td>No</td>
-    <td>No</td>
+    <td>Yes<sup>1,3</sup></td>
+    <td>Yes<sup>1,3</sup></td>
   </tr>
   <tr>
     <td>SQRL BCU1525</td>
@@ -134,7 +134,8 @@ NextJTAG is a standalone command line utility used for accessing Xilinx FPGAs ov
 
 <p>
 <sup>1</sup> Bitstream support required for BMC access<br>
-<sup>2</sup> Bittware cards require Bittworks II Toolkit Lite for BMC access (see <a href="#bittware-board-setup">Bittware Board Setup</a>)
+<sup>2</sup> Bittware cards require Bittworks II Toolkit Lite for BMC access (see <a href="#bittware-board-setup">Bittware Board Setup</a>)<br>
+<sup>3</sup> Requires Allmine BMC firmware flashed
 </p>
 
 ## Limitations
@@ -250,6 +251,7 @@ Device Selectors:
 
 Commands:
   -t,--temperature            Performs a read of temperature sysmon/xadc registers
+  -T,--slr-temperature        Performs a read of current temperature from eaach SLR
   -v,--voltage,--vccint       Performs a read of vccint sysmon/xadc registers
   --vccaux                    Performs a read of vccaux sysmon/xadc registers
   --vccbram                   Performs a read of vccbram sysmon/xadc registers
@@ -296,19 +298,21 @@ Client Options:
 Expert Options:
   --set-voltage VOLTAGE       Changes the FPGA core voltage through the BMC (not persistent).
                               WARNING: INCORRECT VALUES CAN CAUSE PERMANENT DAMAGE TO YOUR FPGA!
-                              This option will also clear the current bitstream, so make sure to
-                              reprogram it afterwards. Voltage is programmatically limited to 0.64V
-                              to 0.95V, but each FPGA is unique and may not function across the
-                              entire range. Only supported board is BCU1525; this option is ignored
-                              for all other boards.
+                              This option might also clear the current bitstream, so make sure to
+                              reprogram it afterwards. Voltage is limited to a board specifc range,
+                              but each FPGA is unique and may not function across the entire range.
+                              Only supported on some boards.
   --disable-voltage-limit     Disables artificial voltage limits of the --set-voltages option. Not
                               recommended, only for the brave or the stupid.
+  --power-cycle               Power cycles the FPGA through the BMC. Only suppored on some boards.
   --disable-known-bmc-check   Disables version checks that ensure that known good BMC versions are
                               used. Some BMC features may not work correctly on boards with
                               unsupported BMC versions. Requires standalone mode.
   --disable-bs-check          Disables the check that ensures .bit bitstreams can only be programmed
                               on the correct FPGA.
   --enable-allmine-vcu-bmc    Enables BMC access for VCU1525 boards that have the allmine BMC
+                              flashed. Requires standalone mode.
+  --enable-allmine-u200-bmc   Enables BMC access for Alveo U200 boards that have the allmine BMC
                               flashed. Requires standalone mode.
   --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
                               cards default to 10000000, 15000000 or 30000000 (max), depending on
@@ -369,6 +373,10 @@ Expert Options:
   --disable-known-bmc-check   Disables version checks that ensure that known good BMC versions are
                               used. Some BMC features may not work correctly on boards with
                               unsupported BMC versions.
+  --enable-allmine-vcu-bmc    Enables BMC access for VCU1525 boards that have the allmine BMC
+                              flashed
+  --enable-allmine-u200-bmc   Enables BMC access for Alveo U200 boards that have the allmine BMC
+                              flashed
   --set-jtag-freq FREQ        Override the default JTAG frequency with the specified frequency. Most
                               cards default to 10000000, 15000000 or 30000000 (max), depending on
                               FTDI chip.
